@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Searchbar } from './Searchbar/Searchbar';
+import Searchbar from './Searchbar/Searchbar';
 import { getImages } from './service/request';
 
 import Modal from './Modal/Modal';
@@ -39,14 +39,19 @@ const App = () => {
         .then(response => {
           const data = response.data;
 
-          if (page < Math.ceil(data.totalHits / per_page)) {
-            setIsShowButton(true);
-          }
-
           if (page === 1) {
             setImages(data.hits);
           } else {
-            setImages(previosState => [...previosState, ...data.hits]);
+            setImages(prevState => [...prevState, ...data.hits]);
+          }
+
+          const totalHits = data.totalHits;
+          const totalPages = Math.ceil(totalHits / per_page);
+
+          if (page < totalPages) {
+            setIsShowButton(true);
+          } else {
+            setIsShowButton(false);
           }
         })
         .catch(error => {
@@ -61,6 +66,21 @@ const App = () => {
     }
   }, [query, page]);
 
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.keyCode === 27) {
+        setShowModal(false);
+        document.body.style.overflow = 'auto';
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const handleImageClick = image => {
     setSelectedImage(image);
     setShowModal(true);
@@ -69,6 +89,7 @@ const App = () => {
 
   const handleModalClose = () => {
     setSelectedImage(null);
+    setShowModal(false);
     document.body.style.overflow = 'auto';
   };
 
